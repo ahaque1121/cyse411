@@ -27,7 +27,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install semgrep
 
-      - name: Run Semgrep SAST (auto rules)
+      - name: Run Semgrep SAST (OSS Rules)
   run: |
     semgrep ci \
       --config auto \
