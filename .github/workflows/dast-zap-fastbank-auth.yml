@@ -14,19 +14,17 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "18"
 
       - name: Start Fastbank Auth app
         working-directory: fastbank-auth-lab
         run: |
           npm install
           npm start &
-          # give the app time to boot so ZAP can hit it
-          sleep 20
+          npx wait-on http://localhost:3003
 
       - name: Run OWASP ZAP full scan (Fastbank Auth)
         uses: zaproxy/action-full-scan@v0.8.0
         with:
-          # app is listening on port 3001 (per its logs)
-          target: "http://host.docker.internal:3001"
+          target: "http://host.docker.internal:3003"
           cmd_options: "-a"
