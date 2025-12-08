@@ -24,10 +24,10 @@ jobs:
           # give the app time to boot so ZAP can hit it
           sleep 20
 
-      - name: Run OWASP ZAP full scan (Canonicalization)
+            - name: Run OWASP ZAP full scan (Canonicalization)
         uses: zaproxy/action-full-scan@v0.8.0
         with:
-          target: 'http://host.docker.internal:4000'
-          cmd_options: '-a'
+          target: "http://host.docker.internal:4000"
+          cmd_options: "-a"
           allow_issue_writing: false
-          artifact_name: canonicalization-zap-report
+          artifact_name: zap_canonicalization
