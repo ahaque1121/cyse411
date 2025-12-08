@@ -1,4 +1,4 @@
-name: DAST - ZAP Full Scan (fastbank)
+name: DAST - Fastbank Insecure Classwork
 
 on:
   workflow_dispatch:
@@ -16,15 +16,15 @@ jobs:
         with:
           node-version: "18"
 
-      - name: Start vulnerable app
+      - name: Start Fastbank app
         working-directory: fastbank_insecure_classwork
         run: |
           npm install
           npm start &
           npx wait-on http://localhost:3000
 
-      - name: Run OWASP ZAP full scan
+      - name: Run OWASP ZAP full scan (Fastbank)
         uses: zaproxy/action-full-scan@v0.8.0
         with:
-          target: "http://localhost:3000"
+          target: "http://host.docker.internal:3000"
           cmd_options: "-a"
