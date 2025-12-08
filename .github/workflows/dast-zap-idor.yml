@@ -14,17 +14,19 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "20"
 
       - name: Start IDOR app
         working-directory: idor
         run: |
           npm install
           npm start &
-          npx wait-on http://localhost:3002
+          # give the app time to boot so ZAP can hit it
+          sleep 20
 
       - name: Run OWASP ZAP full scan (IDOR)
         uses: zaproxy/action-full-scan@v0.8.0
         with:
-          target: "http://host.docker.internal:3002"
+          # app runs at http://localhost:3000
+          target: "http://host.docker.internal:3000"
           cmd_options: "-a"
