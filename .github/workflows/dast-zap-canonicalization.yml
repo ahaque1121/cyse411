@@ -6,7 +6,6 @@ on:
 jobs:
   zap_scan_canonicalization:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -21,10 +20,9 @@ jobs:
         run: |
           npm install
           npm start &
-          # give the app time to boot so ZAP can hit it
           sleep 20
 
-            - name: Run OWASP ZAP full scan (Canonicalization)
+      - name: Run OWASP ZAP full scan (Canonicalization)
         uses: zaproxy/action-full-scan@v0.8.0
         with:
           target: "http://host.docker.internal:4000"
