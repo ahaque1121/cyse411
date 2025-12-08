@@ -1,0 +1,30 @@
+name: DAST - IDOR Lab
+
+on:
+  workflow_dispatch:
+
+jobs:
+  zap_scan_idor:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Start IDOR app
+        working-directory: idor
+        run: |
+          npm install
+          npm start &
+          npx wait-on http://localhost:3002
+
+      - name: Run OWASP ZAP full scan (IDOR)
+        uses: zaproxy/action-full-scan@v0.8.0
+        with:
+          target: "http://host.docker.internal:3002"
+          cmd_options: "-a"
