@@ -1,0 +1,17 @@
+name: DAST - ZAP Full Scan (idor)
+
+jobs:
+  zap_scan_idor:
+    ...
+
+    - name: Start vulnerable app
+      working-directory: idor
+      run: |
+        npm install
+        npm start &
+        npx wait-on http://localhost:3002   # change to whatever the lab says
+
+    - name: Run OWASP ZAP full scan
+      with:
+        target: "http://localhost:3002"
+        cmd_options: "-a"
