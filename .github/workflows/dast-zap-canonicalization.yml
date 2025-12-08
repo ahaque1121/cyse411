@@ -14,18 +14,17 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "18"
 
       - name: Start Canonicalization app
         working-directory: canonicalization-example
         run: |
           npm install
           npm start &
-          # give the app time to boot so ZAP can hit it
-          sleep 20
+          npx wait-on http://localhost:3001
 
       - name: Run OWASP ZAP full scan (Canonicalization)
         uses: zaproxy/action-full-scan@v0.8.0
         with:
-          target: "http://host.docker.internal:4000"
+          target: "http://host.docker.internal:3001"
           cmd_options: "-a"
