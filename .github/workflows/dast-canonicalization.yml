@@ -31,4 +31,4 @@ jobs:
           target: "http://host.docker.internal:4000"
           cmd_options: "-a"
           allow_issue_writing: false
-          artifact_name: zap_canonicalization
+          artifact_name: zap
