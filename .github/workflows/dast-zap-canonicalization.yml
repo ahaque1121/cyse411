@@ -27,6 +27,5 @@ jobs:
       - name: Run OWASP ZAP full scan (Canonicalization)
         uses: zaproxy/action-full-scan@v0.8.0
         with:
-          # app runs at http://localhost:4000
           target: "http://host.docker.internal:4000"
           cmd_options: "-a"
