@@ -1,0 +1,18 @@
+name: DAST - ZAP Full Scan (canonicalization)
+
+jobs:
+  zap_scan_canonicalization:
+    ...
+
+    - name: Start vulnerable app
+      working-directory: canonicalization-example
+      run: |
+        npm install
+        npm start &
+        npx wait-on http://localhost:3001    # use the port from your lab
+
+    - name: Run OWASP ZAP full scan
+      uses: zaproxy/action-full-scan@v0.8.0
+      with:
+        target: "http://localhost:3001"      # same port as above
+        cmd_options: "-a"
