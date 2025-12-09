@@ -2,12 +2,6 @@ name: DAST - Canonicalization Example
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - 'canonicalization-example/**'
-      - '.github/workflows/dast-canonicalization.yml'
 
 jobs:
   zap_scan_canonicalization:
