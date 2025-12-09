@@ -20,9 +20,10 @@ jobs:
           npm start &
           sleep 20
       - name: Run OWASP ZAP full scan (Canonicalization)
-        uses: zaproxy/action-full-scan@v0.8.0
-        with:
-          target: "http://host.docker.internal:4000"
-          cmd_options: "-a"
-          allow_issue_writing: false
-          publish_alerts: false
+  uses: zaproxy/action-full-scan@v0.13.0
+  with:
+    target: "http://host.docker.internal:4000"
+    cmd_options: "-a"
+    fail_action: true
+    allow_issue_writing: false
+    artifact_name: "zap-canonicalization-report"
