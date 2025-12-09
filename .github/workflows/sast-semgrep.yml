@@ -31,6 +31,7 @@ jobs:
         run: |
           semgrep ci \
             --config "p/owasp-top-ten" \
+            --include "fastbank_insecure_classwork/**" \
             --include "canonicalization-example/**" \
             --include "idor/**" \
             --include "fastbank-auth-lab/**" \
