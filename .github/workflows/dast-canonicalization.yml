@@ -6,24 +6,34 @@ on:
 jobs:
   zap_scan_canonicalization:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+
       - name: Start Canonicalization app
         working-directory: canonicalization-example
         run: |
           npm install
           npm start &
           sleep 20
+
       - name: Run OWASP ZAP full scan (Canonicalization)
-  uses: zaproxy/action-full-scan@v0.13.0
-  with:
-    target: "http://host.docker.internal:4000"
-    cmd_options: "-a"
-    fail_action: true
-    allow_issue_writing: false
-    artifact_name: "zap-canonicalization-report"
+        uses: zaproxy/action-full-scan@v0.13.0
+        with:
+          target: "http://host.docker.internal:4000"
+          cmd_options: "-a"
+        env:
+          fail_action: true
+        continue-on-error: false
+
+      - name: Upload ZAP Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-canonicalization-report
+          path: ./zap-report
