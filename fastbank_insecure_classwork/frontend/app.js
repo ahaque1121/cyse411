@@ -37,25 +37,47 @@ async function loadUser() {
   document.getElementById("feedback-section").style.display = "";
   document.getElementById("email-section").style.display = "";
 
-  document.getElementById("user-info").textContent =
-    `${me.username} (${me.email})`;
+  document.getElementById("user-info").textContent = `${me.username} (${me.email})`;
 }
 
 async function searchTransactions(e) {
   e.preventDefault();
   const q = document.getElementById("search-q").value;
 
-  const res = await fetch(`${API}/transactions?q=${q}`, {
+  const res = await fetch(`${API}/transactions?q=${encodeURIComponent(q)}`, {
     credentials: "include"
   });
   const tx = await res.json();
 
   const table = document.getElementById("transactions-table");
-  table.innerHTML = "<tr><th>ID</th><th>Amount</th><th>Description</th></tr>";
+
+  while (table.firstChild) {
+    table.removeChild(table.firstChild);
+  }
+
+  const headerRow = document.createElement("tr");
+  ["ID", "Amount", "Description"].forEach(text => {
+    const th = document.createElement("th");
+    th.textContent = text;
+    headerRow.appendChild(th);
+  });
+  table.appendChild(headerRow);
 
   tx.forEach(t => {
     const row = document.createElement("tr");
-    row.innerHTML = `<td>${t.id}</td><td>${t.amount}</td><td>${t.description}</td>`;
+
+    const idCell = document.createElement("td");
+    idCell.textContent = t.id;
+
+    const amountCell = document.createElement("td");
+    amountCell.textContent = t.amount;
+
+    const descCell = document.createElement("td");
+    descCell.textContent = t.description;
+
+    row.appendChild(idCell);
+    row.appendChild(amountCell);
+    row.appendChild(descCell);
     table.appendChild(row);
   });
 }
@@ -82,9 +104,15 @@ async function loadFeedback() {
   container.innerHTML = "";
 
   list.forEach(f => {
-    // STORED XSS HERE
     const p = document.createElement("p");
-    p.innerHTML = `<strong>${f.user}:</strong> ${f.comment}`;
+
+    const strong = document.createElement("strong");
+    strong.textContent = `${f.user}:`;
+    p.appendChild(strong);
+
+    const text = document.createTextNode(` ${f.comment}`);
+    p.appendChild(text);
+
     container.appendChild(p);
   });
 }
@@ -100,12 +128,10 @@ async function updateEmail(e) {
     body: JSON.stringify({ email })
   });
 
-  loadUser(); // reload email
+  loadUser();
 }
 
-// Event listeners
 document.getElementById("login-form").onsubmit = login;
 document.getElementById("search-form").onsubmit = searchTransactions;
 document.getElementById("feedback-form").onsubmit = submitFeedback;
 document.getElementById("email-form").onsubmit = updateEmail;
-
