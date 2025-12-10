@@ -1,11 +1,11 @@
-const express = require('express');
-const path = require('path');
-const fs = require('fs');
-const { body, validationResult } = require('express-validator');
+const express = require("express");
+const path = require("path");
+const fs = require("fs");
+const { body, validationResult } = require("express-validator");
 
 const app = express();
 
-const BASE_DIR = path.resolve(__dirname, 'files');
+const BASE_DIR = path.resolve(__dirname, "files");
 
 if (!fs.existsSync(BASE_DIR)) {
   fs.mkdirSync(BASE_DIR, { recursive: true });
@@ -17,7 +17,10 @@ app.use((req, res, next) => {
     "Content-Security-Policy",
     "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
   );
-  res.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), fullscreen=(self)");
+  res.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(), fullscreen=(self)"
+  );
   res.set("X-Content-Type-Options", "nosniff");
   res.set("Cross-Origin-Resource-Policy", "same-origin");
   res.set("Cross-Origin-Embedder-Policy", "require-corp");
@@ -27,14 +30,14 @@ app.use((req, res, next) => {
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, "public")));
 
-function resolveSafe(baseDir, userInput) {
-  let cleanInput = userInput;
+function resolveSafe(baseDir, rawInput) {
+  let value = rawInput;
   try {
-    cleanInput = decodeURIComponent(userInput);
-  } catch (e) {}
-  const resolved = path.resolve(baseDir, cleanInput);
+    value = decodeURIComponent(rawInput);
+  } catch (_) {}
+  const resolved = path.resolve(baseDir, value);
   if (!resolved.startsWith(baseDir + path.sep)) {
     return null;
   }
@@ -42,16 +45,20 @@ function resolveSafe(baseDir, userInput) {
 }
 
 app.post(
-  '/read',
+  "/read",
   [
-    body('filename')
-      .exists().withMessage('filename required')
+    body("filename")
+      .exists()
+      .withMessage("filename required")
       .bail()
-      .isString().trim().notEmpty().withMessage('filename must not be empty')
-      .custom(value => {
-        if (value.includes('\0')) throw new Error('null byte not allowed');
+      .isString()
+      .trim()
+      .notEmpty()
+      .withMessage("filename must not be empty")
+      .custom((value) => {
+        if (value.includes("\0")) throw new Error("null byte not allowed");
         return true;
-      })
+      }),
   ],
   (req, res) => {
     const errors = validationResult(req);
@@ -59,49 +66,49 @@ app.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { filename } = req.body;
+    const filename = req.body.filename;
     const normalized = resolveSafe(BASE_DIR, filename);
 
     if (!normalized) {
-      return res.status(403).json({ error: 'Path traversal detected' });
+      return res.status(403).json({ error: "Path traversal detected" });
     }
 
     try {
-      const content = fs.readFileSync(normalized, 'utf8');
+      const content = fs.readFileSync(normalized, "utf8");
       res.json({ path: normalized, content });
     } catch (err) {
-      if (err.code === 'ENOENT') {
-        return res.status(404).json({ error: 'File not found' });
+      if (err.code === "ENOENT") {
+        return res.status(404).json({ error: "File not found" });
       }
-      if (err.code === 'EISDIR') {
-        return res.status(400).json({ error: 'Cannot read a directory' });
+      if (err.code === "EISDIR") {
+        return res.status(400).json({ error: "Cannot read a directory" });
       }
       console.error(err);
-      res.status(500).json({ error: 'Internal Server Error' });
+      res.status(500).json({ error: "Internal Server Error" });
     }
   }
 );
 
-app.post('/read-no-validate', (req, res) => {
-  const filename = req.body.filename || '';
+app.post("/read-no-validate", (req, res) => {
+  const filename = req.body.filename || "";
   const joined = path.join(BASE_DIR, filename);
 
   if (!fs.existsSync(joined)) {
-    return res.status(404).json({ error: 'File not found', path: joined });
+    return res.status(404).json({ error: "File not found", path: joined });
   }
 
   try {
-    const content = fs.readFileSync(joined, 'utf8');
+    const content = fs.readFileSync(joined, "utf8");
     res.json({ path: joined, content });
-  } catch (e) {
-    res.status(500).json({ error: 'Read error' });
+  } catch (_) {
+    res.status(500).json({ error: "Read error" });
   }
 });
 
-app.post('/setup-sample', (req, res) => {
+app.post("/setup-sample", (req, res) => {
   const samples = {
-    'hello.txt': 'Hello from safe file!\n',
-    'notes/readme.md': '# Readme\nSample readme file'
+    "hello.txt": "Hello from safe file!\n",
+    "notes/readme.md": "# Readme\nSample readme file",
   };
 
   try {
@@ -110,12 +117,12 @@ app.post('/setup-sample', (req, res) => {
       if (p) {
         const d = path.dirname(p);
         if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
-        fs.writeFileSync(p, value, 'utf8');
+        fs.writeFileSync(p, value, "utf8");
       }
     }
     res.json({ ok: true, base: BASE_DIR });
-  } catch (e) {
-    res.status(500).json({ error: 'Setup failed' });
+  } catch (_) {
+    res.status(500).json({ error: "Setup failed" });
   }
 });
 
