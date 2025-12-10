@@ -4,30 +4,29 @@ on:
   workflow_dispatch:
 
 jobs:
-  dast_scan:
+  dast_fastbank_scan:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Configure Node.js runtime
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
 
-      - name: Install lab packages
+      - name: Install dependencies
         working-directory: fastbank-auth-lab
         run: npm install
 
-      - name: Launch vulnerable Fastbank app
+      - name: Start application
         working-directory: fastbank-auth-lab
         run: |
           npm start &
-          # give the server time to start
           sleep 20
 
-      - name: Execute OWASP ZAP full scan
+      - name: Run OWASP ZAP scan
         uses: zaproxy/action-full-scan@v0.13.0
         with:
           target: http://localhost:3001
