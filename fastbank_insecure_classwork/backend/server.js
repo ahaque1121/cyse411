@@ -7,18 +7,37 @@ const crypto = require("crypto");
 
 const app = express();
 
-// --- BASIC CORS (clean, not vulnerable) ---
+app.disable("x-powered-by");
+
 app.use(
   cors({
-   origin: ["http://localhost:3001", "http://127.0.0.1:3001"],
+    origin: ["http://localhost:3001", "http://127.0.0.1:3001"],
     credentials: true
   })
 );
 
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+  );
+  res.setHeader(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(), fullscreen=(self)"
+  );
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
+  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  next();
+});
+
 app.use(bodyParser.json());
 app.use(cookieParser());
 
-// --- IN-MEMORY SQLITE DB (clean) ---
 const db = new sqlite3.Database(":memory:");
 
 db.serialize(() => {
@@ -50,14 +69,15 @@ db.serialize(() => {
 
   const passwordHash = crypto.createHash("sha256").update("password123").digest("hex");
 
-  db.run(`INSERT INTO users (username, password_hash, email)
-          VALUES ('alice', '${passwordHash}', 'alice@example.com');`);
+  db.run(
+    `INSERT INTO users (username, password_hash, email)
+     VALUES ('alice', '${passwordHash}', 'alice@example.com');`
+  );
 
   db.run(`INSERT INTO transactions (user_id, amount, description) VALUES (1, 25.50, 'Coffee shop')`);
   db.run(`INSERT INTO transactions (user_id, amount, description) VALUES (1, 100, 'Groceries')`);
 });
 
-// --- SESSION STORE (simple, predictable token exactly like assignment) ---
 const sessions = {};
 
 function fastHash(pwd) {
@@ -71,11 +91,6 @@ function auth(req, res, next) {
   next();
 }
 
-// ------------------------------------------------------------
-// Q4 — AUTH ISSUE 1 & 2: SHA256 fast hash + SQLi in username.
-// Q4 — AUTH ISSUE 3: Username enumeration.
-// Q4 — AUTH ISSUE 4: Predictable sessionId.
-// ------------------------------------------------------------
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
 
@@ -89,28 +104,20 @@ app.post("/login", (req, res) => {
       return res.status(401).json({ error: "Wrong password" });
     }
 
-    const sid = `${username}-${Date.now()}`; // predictable
+    const sid = `${username}-${Date.now()}`;
     sessions[sid] = { userId: user.id };
 
-    // Cookie is intentionally “normal” (not HttpOnly / secure)
     res.cookie("sid", sid, {});
-
     res.json({ success: true });
   });
 });
 
-// ------------------------------------------------------------
-// /me — clean route, no vulnerabilities
-// ------------------------------------------------------------
 app.get("/me", auth, (req, res) => {
   db.get(`SELECT username, email FROM users WHERE id = ${req.user.id}`, (err, row) => {
     res.json(row);
   });
 });
 
-// ------------------------------------------------------------
-// Q1 — SQLi in transaction search
-// ------------------------------------------------------------
 app.get("/transactions", auth, (req, res) => {
   const q = req.query.q || "";
   const sql = `
@@ -123,9 +130,6 @@ app.get("/transactions", auth, (req, res) => {
   db.all(sql, (err, rows) => res.json(rows));
 });
 
-// ------------------------------------------------------------
-// Q2 — Stored XSS + SQLi in feedback insert
-// ------------------------------------------------------------
 app.post("/feedback", auth, (req, res) => {
   const comment = req.body.comment;
   const userId = req.user.id;
@@ -149,9 +153,6 @@ app.get("/feedback", auth, (req, res) => {
   });
 });
 
-// ------------------------------------------------------------
-// Q3 — CSRF + SQLi in email update
-// ------------------------------------------------------------
 app.post("/change-email", auth, (req, res) => {
   const newEmail = req.body.email;
 
@@ -165,7 +166,6 @@ app.post("/change-email", auth, (req, res) => {
   });
 });
 
-// ------------------------------------------------------------
 app.listen(4000, () =>
   console.log("FastBank Version A backend running on http://localhost:4000")
 );
