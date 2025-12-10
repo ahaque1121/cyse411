@@ -2,13 +2,13 @@ name: SAST - Semgrep
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
 
 jobs:
   semgrep:
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       security-events: write
@@ -20,21 +20,18 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.x"
+          python-version: "3.11"
 
       - name: Install Semgrep
         run: |
           python -m pip install --upgrade pip
           pip install semgrep
 
-      - name: Run Semgrep SAST (OWASP Top 10)
+      - name: Run Semgrep SAST scan
         run: |
-          semgrep ci \
-            --config "p/owasp-top-ten" \
-            --include "fastbank_insecure_classwork/**" \
-            --include "canonicalization-example/**" \
-            --include "idor/**" \
-            --include "fastbank-auth-lab/**" \
+          semgrep \
+            --config p/owasp-top-ten \
+            --error \
             --sarif --output semgrep-results.sarif
 
       - name: Upload SARIF to GitHub Security tab
