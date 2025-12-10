@@ -5,31 +5,23 @@ const { body, validationResult } = require('express-validator');
 
 const app = express();
 
-
 const BASE_DIR = path.resolve(__dirname, 'files');
 
-// Ensure storage exists immediately
 if (!fs.existsSync(BASE_DIR)) {
   fs.mkdirSync(BASE_DIR, { recursive: true });
 }
 
-
-
 app.use((req, res, next) => {
   res.removeHeader("x-powered-by");
-
   res.set(
     "Content-Security-Policy",
     "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
   );
-
   res.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), fullscreen=(self)");
   res.set("X-Content-Type-Options", "nosniff");
-  
   res.set("Cross-Origin-Resource-Policy", "same-origin");
   res.set("Cross-Origin-Embedder-Policy", "require-corp");
   res.set("Cross-Origin-Opener-Policy", "same-origin");
-
   next();
 });
 
@@ -37,25 +29,17 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-
-
 function resolveSafe(baseDir, userInput) {
   let cleanInput = userInput;
   try {
     cleanInput = decodeURIComponent(userInput);
-  } catch (e) {
-    
-  }
-  
+  } catch (e) {}
   const resolved = path.resolve(baseDir, cleanInput);
-
   if (!resolved.startsWith(baseDir + path.sep)) {
     return null;
   }
-  
   return resolved;
 }
-
 
 app.post(
   '/read',
@@ -78,7 +62,6 @@ app.post(
     const { filename } = req.body;
     const normalized = resolveSafe(BASE_DIR, filename);
 
-    // Security check failed?
     if (!normalized) {
       return res.status(403).json({ error: 'Path traversal detected' });
     }
@@ -101,12 +84,12 @@ app.post(
 
 app.post('/read-no-validate', (req, res) => {
   const filename = req.body.filename || '';
-  const joined = path.join(BASE_DIR, filename); 
+  const joined = path.join(BASE_DIR, filename);
 
   if (!fs.existsSync(joined)) {
     return res.status(404).json({ error: 'File not found', path: joined });
   }
-  
+
   try {
     const content = fs.readFileSync(joined, 'utf8');
     res.json({ path: joined, content });
@@ -139,7 +122,6 @@ app.post('/setup-sample', (req, res) => {
 app.use((req, res) => {
   res.status(404).send("Not found");
 });
-
 
 if (require.main === module) {
   const port = process.env.PORT || 4000;
