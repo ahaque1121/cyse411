@@ -6,6 +6,7 @@ const sqlite3 = require("sqlite3").verbose();
 const crypto = require("crypto");
 
 const app = express();
+const PORT = process.env.PORT || 4000;
 
 app.disable("x-powered-by");
 
@@ -15,25 +16,6 @@ app.use(
     credentials: true
   })
 );
-
-app.use((req, res, next) => {
-  res.setHeader(
-    "Content-Security-Policy",
-    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
-  );
-  res.setHeader(
-    "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=(), fullscreen=(self)"
-  );
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
-  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
-  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-  res.setHeader("Pragma", "no-cache");
-  res.setHeader("Expires", "0");
-  next();
-});
 
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -67,15 +49,22 @@ db.serialize(() => {
     );
   `);
 
-  const passwordHash = crypto.createHash("sha256").update("password123").digest("hex");
+  const passwordHash = crypto
+    .createHash("sha256")
+    .update("password123")
+    .digest("hex");
 
   db.run(
     `INSERT INTO users (username, password_hash, email)
      VALUES ('alice', '${passwordHash}', 'alice@example.com');`
   );
 
-  db.run(`INSERT INTO transactions (user_id, amount, description) VALUES (1, 25.50, 'Coffee shop')`);
-  db.run(`INSERT INTO transactions (user_id, amount, description) VALUES (1, 100, 'Groceries')`);
+  db.run(
+    `INSERT INTO transactions (user_id, amount, description) VALUES (1, 25.50, 'Coffee shop')`
+  );
+  db.run(
+    `INSERT INTO transactions (user_id, amount, description) VALUES (1, 100, 'Groceries')`
+  );
 });
 
 const sessions = {};
@@ -86,7 +75,9 @@ function fastHash(pwd) {
 
 function auth(req, res, next) {
   const sid = req.cookies.sid;
-  if (!sid || !sessions[sid]) return res.status(401).json({ error: "Not authenticated" });
+  if (!sid || !sessions[sid]) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
   req.user = { id: sessions[sid].userId };
   next();
 }
@@ -113,9 +104,12 @@ app.post("/login", (req, res) => {
 });
 
 app.get("/me", auth, (req, res) => {
-  db.get(`SELECT username, email FROM users WHERE id = ${req.user.id}`, (err, row) => {
-    res.json(row);
-  });
+  db.get(
+    `SELECT username, email FROM users WHERE id = ${req.user.id}`,
+    (err, row) => {
+      res.json(row);
+    }
+  );
 });
 
 app.get("/transactions", auth, (req, res) => {
@@ -156,7 +150,9 @@ app.get("/feedback", auth, (req, res) => {
 app.post("/change-email", auth, (req, res) => {
   const newEmail = req.body.email;
 
-  if (!newEmail.includes("@")) return res.status(400).json({ error: "Invalid email" });
+  if (!newEmail.includes("@")) {
+    return res.status(400).json({ error: "Invalid email" });
+  }
 
   const sql = `
     UPDATE users SET email = '${newEmail}' WHERE id = ${req.user.id}
@@ -166,6 +162,6 @@ app.post("/change-email", auth, (req, res) => {
   });
 });
 
-app.listen(4000, () =>
-  console.log("FastBank Version A backend running on http://localhost:4000")
-);
+app.listen(PORT, () => {
+  console.log(`FastBank Version A backend running on http://localhost:${PORT}`);
+});
